@@ -9,6 +9,7 @@ export default function Login() {
   const [showPass, setShowPass]   = useState(false)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
+  const [showForgotMsg, setShowForgotMsg] = useState(false)
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -176,11 +177,19 @@ export default function Login() {
             <div className="flex justify-end">
               <button
                 type="button"
+                onClick={() => setShowForgotMsg(!showForgotMsg)}
                 className="text-sm text-red-600 hover:underline"
               >
                 Forgot Password?
               </button>
             </div>
+
+            {/* Forgot password message*/}
+            {showForgotMsg && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm px-4 py-3 rounded-lg">
+                Please contact your campus admin or IT helpdesk to reset your password.
+              </div>
+            )}
 
             {/* Login button */}
             <button
