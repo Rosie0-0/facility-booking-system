@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-const campusImg = '/campus.jpg'
+const campusImg = '/Inti-campus.jpg'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -67,15 +67,13 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">I</span>
+            <div className="flex items-center">
+            <img
+                src="/inti-logo.png"
+                alt="INTI Logo"
+                className="h-10 object-contain"
+            />
             </div>
-            <div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">INTI</p>
-              <p className="text-gray-400 text-xs">International College Penang</p>
-            </div>
-          </div>
 
           {/* Center title */}
           <div className="hidden md:flex items-center">
@@ -265,15 +263,7 @@ export default function Dashboard() {
 
           {/* Logo */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 bg-red-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">I</span>
-              </div>
-              <div>
-                <p className="font-bold text-sm">INTI</p>
-                <p className="text-gray-400 text-xs">International College Penang</p>
-              </div>
-            </div>
+            {/* Logo */}
             <p className="text-gray-400 text-sm">
               Campus Facility Booking & Management System
             </p>

@@ -111,14 +111,13 @@ export default function Login() {
         <div className="w-full max-w-md">
 
           {/* Logo + title */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">I</span>
-            </div>
-            <div>
-              <p className="font-bold text-gray-900 text-lg leading-tight">INTI</p>
-              <p className="text-gray-500 text-sm">International College Penang</p>
-            </div>
+          {/* Logo */}
+          <div className="flex items-center">
+            <img
+              src="/inti-logo.png"
+              alt="INTI Logo"
+              className="h-15 object-contain"
+            />
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome</h1>
