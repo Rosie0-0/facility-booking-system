@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 const campusImg = '/Inti-campus.jpg'
 
@@ -60,78 +62,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
 
-      {/* Navbar */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-
-          {/* Logo */}
-            <div className="flex items-center">
-            <img
-                src="/inti-logo.png"
-                alt="INTI Logo"
-                className="h-10 object-contain"
-            />
-            </div>
-
-          {/* Center title */}
-          <div className="hidden md:flex items-center">
-            <span className="text-sm font-medium text-gray-500">
-              Campus Facility Booking & Management
-            </span>
-          </div>
-
-          {/* Nav links */}
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => navigate('/facilities')}
-              className="text-sm text-gray-600 hover:text-red-600 font-medium"
-            >
-              Facilities
-            </button>
-            <button
-              onClick={() => navigate('/bookings')}
-              className="text-sm text-gray-600 hover:text-red-600 font-medium"
-            >
-              Bookings
-            </button>
-            <button
-              onClick={() => navigate('/notifications')}
-              className="text-sm text-gray-600 hover:text-red-600 font-medium"
-            >
-              Notification
-            </button>
-            <button
-              onClick={scrollToFooter}
-              className="text-sm text-gray-600 hover:text-red-600 font-medium"
-            >
-              Contact Us
-            </button>
-
-            {/* User dropdown */}
-            <div className="relative group">
-              <button className="flex items-center gap-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-full px-3 py-1.5 hover:border-red-300">
-                <span>{'< '}{user?.campus_id}{' >'}</span>
-              </button>
-              <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-100 rounded-lg shadow-lg hidden group-hover:block">
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  My Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-b-lg"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Reusable Navbar Component */}
+      <Navbar user={user} />
 
       {/* Hero Section */}
       <div className="relative h-80 overflow-hidden">
@@ -168,7 +102,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-6 flex-1">
 
         {/* Booking counts */}
         <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
@@ -257,59 +191,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer id="footer" className="bg-gray-900 text-white mt-16 py-10">
-        <div className="max-w-7xl mx-auto px-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-
-          {/* Logo */}
-          <div>
-            {/* Logo */}
-            <p className="text-gray-400 text-sm">
-              Campus Facility Booking & Management System
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-4 text-sm">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li
-                className="hover:text-white cursor-pointer"
-                onClick={() => navigate('/facilities')}
-              >
-                Facilities
-              </li>
-              <li
-                className="hover:text-white cursor-pointer"
-                onClick={() => navigate('/bookings')}
-              >
-                My Bookings
-              </li>
-              <li
-                className="hover:text-white cursor-pointer"
-                onClick={() => navigate('/notifications')}
-              >
-                Notifications
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-semibold mb-4 text-sm">Contact Us</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li>📍 Lebuh Bukit Jambul, 11900 Penang</li>
-              <li>📞 +604-630 8888</li>
-              <li>✉️ info@newinti.edu.my</li>
-            </ul>
-          </div>
-
-        </div>
-
-        <div className="border-t border-gray-700 mt-8 pt-6 text-center text-xs text-gray-500">
-          © 2026 INTI International College Penang. All Rights Reserved.
-        </div>
-      </footer>
+      {/* Reusable Footer Component */}
+      <Footer />
 
     </div>
   )

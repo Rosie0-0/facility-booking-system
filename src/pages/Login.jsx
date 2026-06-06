@@ -92,7 +92,7 @@ export default function Login() {
       {/* Left side — campus image */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gray-900">
         <img
-          src="/campus.jpg"
+          src="/Inti-campus-full-view.jpg"
           alt="INTI Campus"
           className="w-full h-full object-cover opacity-70"
         />
