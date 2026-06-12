@@ -19,6 +19,7 @@ function formatCapacity(capacity) {
 }
 
 function FacilityCard({ facility }) {
+  const navigate = useNavigate()
   const [imageSrc, setImageSrc] = useState(
     getFacilityImageUrl(facility.image_path, facility.facility_name)
   )
@@ -73,6 +74,20 @@ function FacilityCard({ facility }) {
               : 'Free'}
           </p>
         </div>
+
+        {/* Book Now button */}
+        <button
+          onClick={() => navigate(`/bookings/new?facility=${facility.facility_id}`)}
+          disabled={facility.status !== 'available'}
+          className={`mt-4 w-full py-2.5 rounded-lg text-sm font-semibold transition ${
+            facility.status === 'available'
+              ? 'bg-red-600 hover:bg-red-700 text-white'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          {facility.status === 'available' ? 'Book Now' : 'Unavailable'}
+        </button>
+        
       </div>
     </div>
   )
