@@ -36,13 +36,30 @@ export default function BookingForm() {
   const [penaltyWarning, setPenaltyWarning] = useState(false)
   const [blockedWarning, setBlockedWarning] = useState(false)
 
-  // Tomorrow's date
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const bookingDate = tomorrow.toISOString().split('T')[0]
-  const bookingDateDisplay = tomorrow.toLocaleDateString('en-MY', {
+  // // Tomorrow's date
+  // const tomorrow = new Date()
+  // tomorrow.setDate(tomorrow.getDate() + 1)
+  // const bookingDate = tomorrow.toISOString().split('T')[0]
+  // const bookingDateDisplay = tomorrow.toLocaleDateString('en-MY', {
+  //   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  // })
+
+  // Today's date
+  const today = new Date()
+  //today.setDate(today.getDate())
+  const bookingDate = today.toISOString().split('T')[0]
+  const bookingDateDisplay = today.toLocaleDateString('en-MY', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   })
+
+  //Event area special booking
+  const [eventStartDate, setEventStartDate] = useState('')
+  const [eventEndDate, setEventEndDate]     = useState('')
+
+  // Minimum date for event area = 7 days from today
+  const minEventDateObj = new Date()
+  minEventDateObj.setDate(minEventDateObj.getDate() + 7)
+  const minEventDate = minEventDateObj.toISOString().split('T')[0]
 
   useEffect(() => {
     if (!facilityId) { navigate('/facilities'); return }
@@ -116,9 +133,21 @@ export default function BookingForm() {
   }
 
   async function handleBooking() {
-    if (!selectedSlot) {
-      setError('Please select a time slot.')
-      return
+    //Validation
+    if (facility.facility_name === 'event_area') {
+      if (!eventStartDate || !eventEndDate){
+        setError('Please select both start and end dates.')
+        return
+      }
+      if (eventEndDate < eventStartDate){
+        setError('End date must be after start date.')
+        return
+      }
+    }else {
+      if (!selectedSlot){
+        setError('Please select a time slot.')
+        return
+      }
     }
 
     setSubmitting(true)
@@ -145,15 +174,27 @@ export default function BookingForm() {
   async function submitBooking() {
     setSubmitting(true)
 
-    const startDateTime = `${bookingDate}T${selectedSlot.start}:00+08:00`
-    const endDateTime   = `${bookingDate}T${selectedSlot.end}:00+08:00`
+    let startDateTime, endDateTime, bookingDateFinal, endDateFinal
+
+    if(facility.facility_name === 'event_area'){
+      startDateTime     = `${eventStartDate}T:08:00:00+08:00`
+      endDateTime       = `${eventEndDate}T${facility.closing_time}+08:00`
+      bookingDateFinal  = eventStartDate
+      endDateFinal      = eventEndDate
+    } else {
+      startDateTime     = `${bookingDate}T${selectedSlot.start}:00+08:00`
+      endDateTime       = `${bookingDate}T${selectedSlot.end}:00+08:00`
+      bookingDateFinal  = bookingDate
+      endDateFinal      = null
+    }
 
     const { data, error: bookingError } = await supabase
       .from('bookings')
       .insert({
         user_id:          user.id,
         facility_id:      facility.facility_id,
-        booking_date:     bookingDate,
+        booking_date:     bookingDateFinal,
+        end_date:         endDateFinal,
         start_time:       startDateTime,
         end_time:         endDateTime,
         booked_name:      user.full_name,
@@ -285,38 +326,77 @@ export default function BookingForm() {
               </div>
             </div>
 
-            {/* Time slot selector */}
-            <div className="mb-6">
-              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-3">
-                Select Time Slot
-              </label>
-              {timeSlots.length === 0 ? (
-                <p className="text-sm text-gray-500">No time slots available.</p>
-              ) : (
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map(slot => {
-                    const booked   = isSlotBooked(slot)
-                    const selected = selectedSlot?.start === slot.start
-                    return (
-                      <button
-                        key={slot.start}
-                        onClick={() => !booked && setSelectedSlot(slot)}
-                        disabled={booked}
-                        className={`py-2 px-3 rounded-lg text-xs font-medium transition ${
-                          booked
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed line-through'
-                            : selected
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-50 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-200'
-                        }`}
-                      >
-                        {slot.label}
-                      </button>
-                    )
-                  })}
+            {/* Time slot OR Date range depending on facility */}
+            {facility.facility_name === 'event_area' ? (
+
+              /* Event Area — date range picker */
+              <div className="mb-6">
+                <label className="text-xs text-gray-400 uppercase tracking-wide block mb-3">
+                  Select Event Dates
+                </label>
+                <p className="text-xs text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2 mb-3">
+                  ⚠️ Event Area bookings must be made at least 7 days in advance.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Start Date</label>
+                    <input
+                      type="date"
+                      min={minEventDate}
+                      value={eventStartDate}
+                      onChange={e => setEventStartDate(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">End Date</label>
+                    <input
+                      type="date"
+                      min={eventStartDate || minEventDate}
+                      value={eventEndDate}
+                      onChange={e => setEventEndDate(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+
+            ) : (
+
+              /* Regular facilities — time slot selector */
+              <div className="mb-6">
+                <label className="text-xs text-gray-400 uppercase tracking-wide block mb-3">
+                  Select Time Slot
+                </label>
+                {timeSlots.length === 0 ? (
+                  <p className="text-sm text-gray-500">No time slots available.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {timeSlots.map(slot => {
+                      const booked   = isSlotBooked(slot)
+                      const selected = selectedSlot?.start === slot.start
+                      return (
+                        <button
+                          key={slot.start}
+                          onClick={() => !booked && setSelectedSlot(slot)}
+                          disabled={booked}
+                          className={`py-2 px-3 rounded-lg text-xs font-medium transition ${
+                            booked
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed line-through'
+                              : selected
+                              ? 'bg-red-600 text-white'
+                              : 'bg-gray-50 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-200'
+                          }`}
+                        >
+                          {slot.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+            )}
 
             {/* Selected slot summary */}
             {selectedSlot && (
