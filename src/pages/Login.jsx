@@ -9,6 +9,7 @@ export default function Login() {
   const [showPass, setShowPass]   = useState(false)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
+  const [showForgotMsg, setShowForgotMsg] = useState(false)
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -91,7 +92,7 @@ export default function Login() {
       {/* Left side — campus image */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gray-900">
         <img
-          src="/campus.jpg"
+          src="/Inti-campus-full-view.jpg"
           alt="INTI Campus"
           className="w-full h-full object-cover opacity-70"
         />
@@ -110,14 +111,13 @@ export default function Login() {
         <div className="w-full max-w-md">
 
           {/* Logo + title */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">I</span>
-            </div>
-            <div>
-              <p className="font-bold text-gray-900 text-lg leading-tight">INTI</p>
-              <p className="text-gray-500 text-sm">International College Penang</p>
-            </div>
+          {/* Logo */}
+          <div className="flex items-center">
+            <img
+              src="/inti-logo.png"
+              alt="INTI Logo"
+              className="h-15 object-contain"
+            />
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome</h1>
@@ -176,11 +176,19 @@ export default function Login() {
             <div className="flex justify-end">
               <button
                 type="button"
+                onClick={() => setShowForgotMsg(!showForgotMsg)}
                 className="text-sm text-red-600 hover:underline"
               >
                 Forgot Password?
               </button>
             </div>
+
+            {/* Forgot password message*/}
+            {showForgotMsg && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm px-4 py-3 rounded-lg">
+                Please contact your campus admin or IT helpdesk to reset your password.
+              </div>
+            )}
 
             {/* Login button */}
             <button
