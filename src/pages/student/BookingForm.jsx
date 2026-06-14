@@ -13,10 +13,15 @@ function generateTimeSlots(openingTime, closingTime, maxHours) {
   const [closeH] = closingTime.split(':').map(Number)
   const duration = maxHours || 1
 
+  //Get current hour in Malaysia Time (UTC+8)
+  const nowMY = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur'}))
+  const currentHour = nowMY.getHours()
+
   for (let h = openH; h + duration <= closeH; h++) {
     const start = `${String(h).padStart(2, '0')}:00`
     const end   = `${String(h + duration).padStart(2, '0')}:00`
-    slots.push({ start, end, label: `${start} – ${end}` })
+    const isPast = h < currentHour //filter out past slots
+    slots.push({ start, end, label: `${start} – ${end}`, isPast })
   }
   return slots
 }
@@ -373,7 +378,7 @@ export default function BookingForm() {
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
                     {timeSlots.map(slot => {
-                      const booked   = isSlotBooked(slot)
+                      const booked   = isSlotBooked(slot) || slot.isPast
                       const selected = selectedSlot?.start === slot.start
                       return (
                         <button
