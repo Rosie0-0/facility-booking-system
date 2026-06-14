@@ -1,8 +1,39 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Navbar({ user }) {
   const navigate = useNavigate()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (user) fetchUnreadCount()
+
+    //Realtime subscription
+    const channel = supabase
+      .channel('notifications')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public', 
+        table: 'notifications',
+        filter: user ? `user_id=eq.${user.id}` :undefined
+      }, () => {
+        fetchUnreadCount()
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
+  }, [user])
+
+  async function fetchUnreadCount() {
+    const {count} = await supabase
+      .from('notifications')
+      .select('*', {count: 'exact', head: true})
+      .eq('user_id', user.id)
+      .eq('is_read', false)
+
+     setUnreadCount(count || 0) 
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -55,6 +86,11 @@ export default function Navbar({ user }) {
             className="text-sm text-gray-600 hover:text-red-600 font-medium"
           >
             Notification
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
           <button
             onClick={scrollToFooter}

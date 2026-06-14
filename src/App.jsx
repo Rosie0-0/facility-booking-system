@@ -7,7 +7,8 @@ import Facilities from './pages/student/Facilities'
 import BookingForm from './pages/student/BookingForm'
 import BookingDetail from './pages/student/BookingDetail'
 import MyBookings from './pages/student/MyBookings'
-//import Notifications from './pages/student/Notifications'
+import Notifications from './pages/student/Notifications'
+import Profile from './pages/student/Profile'
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
         <Route path="/bookings/new" element={<BookingForm />} />
         <Route path="/bookings/:bookingId" element={<BookingDetail />} />
         <Route path="/bookings" element={<MyBookings />}/>
-        {/* <Route path="notifications" element={<Notifications />}/> */}
+        <Route path="notifications" element={<Notifications />}/>
+        <Route path="/profile" element={<Profile />}/>
       </Routes>
     </BrowserRouter>
   )
