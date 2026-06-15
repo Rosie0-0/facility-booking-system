@@ -85,17 +85,17 @@ export default function Dashboard() {
 
         {/* Booking status tabs */}
         <div className="absolute bottom-0 left-12 flex gap-2">
-          {['pending', 'booked', 'history'].map(tab => (
+          {[
+            { label: 'Pending', tab: 'pending' },
+            { label: 'Booked',  tab: 'upcoming' },
+            { label: 'History', tab: 'completed' },
+          ].map(item => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2 text-sm font-medium capitalize rounded-t-lg transition ${
-                activeTab === tab
-                  ? 'bg-white text-red-600'
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
+              key={item.tab}
+              onClick={() => navigate(`/bookings?tab=${item.tab}`)}
+              className="px-6 py-2 text-sm font-medium rounded-t-lg transition bg-white/20 text-white hover:bg-white/30"
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {item.label}
             </button>
           ))}
         </div>

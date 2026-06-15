@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatFacilityName } from '../../lib/facilityImages'
 import Navbar from '../../components/Navbar'
@@ -45,7 +45,8 @@ export default function MyBookings() {
   const [user, setUser]           = useState(null)
   const [bookings, setBookings]   = useState([])
   const [loading, setLoading]     = useState(true)
-  const [activeTab, setActiveTab] = useState('all')
+  const [searchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all')
   const [page, setPage]           = useState(1)
   const [hasMore, setHasMore]     = useState(false)
   const [counts, setCounts]       = useState({
@@ -55,6 +56,10 @@ export default function MyBookings() {
   useEffect(() => {
     getUser()
   }, [])
+
+  useEffect(() => {
+  setActiveTab(searchParams.get('tab') || 'all')
+  }, [searchParams])
 
   useEffect(() => {
     if (user) {
