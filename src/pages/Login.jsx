@@ -72,11 +72,15 @@ export default function Login() {
         }
       }
 
+      const { data: {user} } = await supabase.auth.getUser();
+
+      console.log(user);
+
       // Step 4: Redirect based on role
       if (member.role === 'admin') {
-        navigate('/admin/dashboard')
+        navigate('/admin/dashboard', {replace: true})
       } else {
-        navigate('/dashboard')
+        navigate('/dashboard', {replace:true});
       }
 
     } catch (err) {

@@ -9,6 +9,7 @@ import BookingDetail from './pages/student/BookingDetail'
 import MyBookings from './pages/student/MyBookings'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
+import AdminDashboard from './pages/admin/Dashboard'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/bookings" element={<MyBookings />}/>
         <Route path="notifications" element={<Notifications />}/>
         <Route path="/profile" element={<Profile />}/>
+        <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
       </Routes>
     </BrowserRouter>
   )

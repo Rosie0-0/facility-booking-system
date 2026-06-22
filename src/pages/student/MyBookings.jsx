@@ -83,6 +83,7 @@ export default function MyBookings() {
   }
 
   async function getBookings(pageNum = 1, reset = false) {
+    if (!user) return
     setLoading(true)
 
     let query = supabase
@@ -119,6 +120,7 @@ export default function MyBookings() {
   }
 
   async function getCounts() {
+    if (!user) return
     const now = new Date().toISOString()
 
     const [pending, upcoming, completed, cancelled, rejected] = await Promise.all([
