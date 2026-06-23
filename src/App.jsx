@@ -10,6 +10,7 @@ import MyBookings from './pages/student/MyBookings'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
 import AdminDashboard from './pages/admin/Dashboard'
+//import ManageBookings from './pages/admin/ManageBookings'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="notifications" element={<Notifications />}/>
         <Route path="/profile" element={<Profile />}/>
         <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
+        {/* <Route path="/admin/ManageBookings" element={<ManageBookings/>}/> */}
       </Routes>
     </BrowserRouter>
   )

@@ -55,10 +55,6 @@ export default function AdminDashboard() {
     
     const { data: { user: authUser }, error:authError } = 
       await supabase.auth.getUser()
-  
-    //Debug
-    console.log('authUser:', authUser)
-    console.log('authError:', authError)
 
     if (authError || !authUser) { 
       navigate('/', {replace: true});
@@ -71,12 +67,7 @@ export default function AdminDashboard() {
       .eq('id', authUser.id)
       .single()
 
-    //Debug
-    console.log('userData:', data)
-    console.log('userError:', error)
-
     if (error || !data) {
-      //console.error(error)
       navigate('/', {replace: true});
       return
     }
