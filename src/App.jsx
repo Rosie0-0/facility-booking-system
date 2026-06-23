@@ -2,6 +2,7 @@
 //Start to implement UI
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
+//Users
 import Dashboard from './pages/student/Dashboard'
 import Facilities from './pages/student/Facilities'
 import BookingForm from './pages/student/BookingForm'
@@ -9,23 +10,34 @@ import BookingDetail from './pages/student/BookingDetail'
 import MyBookings from './pages/student/MyBookings'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
+//Admin
 import AdminDashboard from './pages/admin/Dashboard'
-//import ManageBookings from './pages/admin/ManageBookings'
+import ManageBookings from './pages/admin/ManageBookings'
+import AdminFacilities from './pages/admin/ManageFacilities'
+import AdminUsers from './pages/admin/ManageUsers'
+import AdminPenalties from './pages/admin/ManagePenalties'
+import AdminAnnouncements from './pages/admin/Announcements'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/facilities" element={<Facilities />} />
-        <Route path="/bookings/new" element={<BookingForm />} />
+        {/* Users */}
+        <Route path="/"                    element={<Login />} />
+        <Route path="/dashboard"           element={<Dashboard />} />
+        <Route path="/facilities"          element={<Facilities />} />
+        <Route path="/bookings/new"        element={<BookingForm />} />
         <Route path="/bookings/:bookingId" element={<BookingDetail />} />
-        <Route path="/bookings" element={<MyBookings />}/>
-        <Route path="notifications" element={<Notifications />}/>
-        <Route path="/profile" element={<Profile />}/>
-        <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
-        {/* <Route path="/admin/ManageBookings" element={<ManageBookings/>}/> */}
+        <Route path="/bookings"            element={<MyBookings />}/>
+        <Route path="notifications"        element={<Notifications />}/>
+        <Route path="/profile"             element={<Profile />}/>
+        {/* Admin  */}
+        <Route path="/admin/dashboard"     element={<AdminDashboard/>}/>
+        <Route path="/admin/bookings"      element={<ManageBookings/>}/>
+        <Route path="/admin/facilities"    element={<AdminFacilities />} />
+        <Route path="/admin/users"         element={<AdminUsers />} />
+        <Route path="/admin/penalties"     element={<AdminPenalties />} />
+        <Route path="/admin/announcements" element={<AdminAnnouncements />} />
       </Routes>
     </BrowserRouter>
   )
