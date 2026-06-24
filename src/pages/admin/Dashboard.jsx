@@ -116,11 +116,11 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: 'Total Bookings',  value: stats.totalBookings,   color: 'text-blue-600',   bg: 'bg-blue-50',   icon: '📋' },
-    { label: 'Pending',         value: stats.pending,         color: 'text-yellow-600', bg: 'bg-yellow-50', icon: '⏳' },
-    { label: 'Approved',        value: stats.approved,        color: 'text-green-600',  bg: 'bg-green-50',  icon: '✅' },
-    { label: 'Total Users',     value: stats.totalUsers,      color: 'text-purple-600', bg: 'bg-purple-50', icon: '👥' },
-    { label: 'Facilities',      value: stats.totalFacilities, color: 'text-red-600',    bg: 'bg-red-50',    icon: '🏢' },
+    { label: 'Total Bookings',  value: stats.totalBookings,   color: 'text-blue-600',   bg: 'bg-blue-100',   icon: '📋' },
+    { label: 'Pending',         value: stats.pending,         color: 'text-yellow-600', bg: 'bg-yellow-100', icon: '⏳' },
+    { label: 'Approved',        value: stats.approved,        color: 'text-green-600',  bg: 'bg-green-100',  icon: '✅' },
+    { label: 'Total Users',     value: stats.totalUsers,      color: 'text-purple-600', bg: 'bg-purple-100', icon: '👥' },
+    { label: 'Facilities',      value: stats.totalFacilities, color: 'text-red-600',    bg: 'bg-red-100',    icon: '🏢' },
   ]
 
   if (checking) {
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {statCards.map(stat => (
-            <div key={stat.label} className={`bg-white rounded-xl shadow-sm p-5 border-l-4 ${stat.bg}`}>
+            <div key={stat.label} className={`rounded-xl shadow-sm p-5 ${stat.bg}`}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-2xl">{stat.icon}</span>
                 <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
@@ -161,15 +161,15 @@ export default function AdminDashboard() {
         {/* Quick actions */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Manage Bookings',  path: '/admin/bookings',      color: 'bg-blue-600' },
-            { label: 'Manage Facilities', path: '/admin/facilities',    color: 'bg-green-600' },
-            { label: 'Manage Users',     path: '/admin/users',         color: 'bg-purple-600' },
-            { label: 'Announcements',    path: '/admin/announcements', color: 'bg-orange-600' },
+            { label: 'Manage Bookings',  path: '/admin/bookings'},
+            { label: 'Manage Facilities', path: '/admin/facilities'},
+            { label: 'Manage Users',     path: '/admin/users' },
+            { label: 'Announcements',    path: '/admin/announcements'},
           ].map(action => (
             <button
               key={action.path}
               onClick={() => navigate(action.path)}
-              className={`${action.color} hover:opacity-90 text-white rounded-xl p-4 text-sm font-semibold text-left transition shadow-sm`}
+              className={`${action.color} hover:bg-gray-200 text-gray-600 rounded-xl p-4 text-sm font-semibold text-left transition shadow-md`}
             >
               {action.label} →
             </button>
