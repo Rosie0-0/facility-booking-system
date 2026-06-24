@@ -271,8 +271,8 @@ export default function ManageBookings() {
                 bookings.map(booking => (
                   <tr key={booking.booking_id} className="border-b border-gray-50 hover:bg-gray-50 transition">
                     <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-gray-900">{booking.users?.full_name}</p>
-                      <p className="text-xs text-gray-400">{booking.users?.campus_id}</p>
+                      <p className="text-sm font-medium text-gray-900">{booking.booked_name}</p>
+                      <p className="text-xs text-gray-400">{booking.booked_campus_id}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-gray-900">{formatFacilityName(booking.facilities?.facility_name)}</p>
@@ -344,15 +344,15 @@ export default function ManageBookings() {
             <div className="p-6 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Student</span>
-                <span className="font-medium">{selectedBooking.users?.full_name}</span>
+                <span className="font-medium">{selectedBooking.booked_name}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Campus ID</span>
-                <span className="font-medium">{selectedBooking.users?.campus_id}</span>
+                <span className="font-medium">{selectedBooking.booked_campus_id}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Contact</span>
-                <span className="font-medium">{selectedBooking.users?.phone || '—'}</span>
+                <span className="font-medium">{selectedBooking.booked_contact || '—'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Facility</span>

@@ -105,9 +105,9 @@ export default function AdminDashboard() {
   }
 
   async function getRecentBookings() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('bookings')
-      .select('*, users(full_name, campus_id), facilities(facility_name, location)')
+      .select('*, facilities(facility_name, location)')
       .order('created_at', { ascending: false })
       .limit(10)
 
@@ -216,8 +216,8 @@ export default function AdminDashboard() {
                 recentBookings.map(booking => (
                   <tr key={booking.booking_id} className="border-b border-gray-50 hover:bg-gray-50 transition">
                     <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-gray-900">{booking.users?.full_name}</p>
-                      <p className="text-xs text-gray-400">{booking.users?.campus_id}</p>
+                      <p className="text-sm font-medium text-gray-900">{booking.booked_name}</p>
+                      <p className="text-xs text-gray-400">{booking.booked_campus_id}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-gray-900">
