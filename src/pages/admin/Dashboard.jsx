@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatFacilityName } from '../../lib/facilityImages'
 import AdminNavbar from '../../components/AdminNavbar'
+import BookingDetailPopup from '../../components/BookingDetailPopup'
 
 function formatDate(date) {
   if (!date) return '—'
@@ -25,6 +26,8 @@ const statusColors = {
   cancelled: 'bg-gray-100 text-gray-500',
 }
 
+
+
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [user, setUser]       = useState(null)
@@ -38,6 +41,7 @@ export default function AdminDashboard() {
   })
   const [recentBookings, setRecentBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedBooking, setSelectedBooking] = useState(null)
 
   useEffect(() => {
     getUser()
@@ -241,7 +245,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => navigate('/admin/bookings')}
+                        onClick={() => setSelectedBooking(booking)}
                         className="text-xs text-blue-600 hover:underline font-medium"
                       >
                         Manage
@@ -253,7 +257,18 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
-
+        {selectedBooking && (
+                        <BookingDetailPopup
+                          booking={selectedBooking}
+                          adminUser={user}
+                          onClose={() => setSelectedBooking(null)}
+                          onUpdate={(bookingId, updates) => {
+                            setRecentBookings(prev => prev.map(b =>
+                              b.booking_id === bookingId ? { ...b, ...updates } : b
+                            ))
+                          }}
+                        />
+        )}
       </div>
     </div>
   )
