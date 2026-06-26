@@ -78,7 +78,7 @@ export default function ManageBookings() {
 
     let query = supabase
       .from('bookings')
-      .select('*, users(full_name, campus_id, phone), facilities(facility_name, location, requires_payment, price_per_booking)')
+      .select('*, facilities(facility_name, location, requires_payment, price_per_booking), payments(payment_status)')
       .order('created_at', { ascending: false })
       .range((pageNum - 1) * PAGE_SIZE, pageNum * PAGE_SIZE - 1)
 

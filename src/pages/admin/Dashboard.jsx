@@ -111,10 +111,11 @@ export default function AdminDashboard() {
   async function getRecentBookings() {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, facilities(facility_name, location)')
+      .select('*, facilities(facility_name, location, requires_payment, price_per_booking), payments(payment_status)')
       .order('created_at', { ascending: false })
       .limit(10)
 
+    console.log('Recent bookings:', data)
     setRecentBookings(data || [])
     setLoading(false)
   }
@@ -245,7 +246,10 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => setSelectedBooking(booking)}
+                        onClick={() => { 
+                          console.log('Selected booking:', booking)
+                          setSelectedBooking(booking)}}
+                        // onClick={() => setSelectedBooking(booking)}
                         className="text-xs text-blue-600 hover:underline font-medium"
                       >
                         Manage
@@ -266,6 +270,11 @@ export default function AdminDashboard() {
                             setRecentBookings(prev => prev.map(b =>
                               b.booking_id === bookingId ? { ...b, ...updates } : b
                             ))
+                          }}
+
+                          onRefresh={async () => {
+                            await getStats()
+                            await getRecentBookings()
                           }}
                         />
         )}

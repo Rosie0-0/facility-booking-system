@@ -23,15 +23,19 @@ const statusColors = {
   cancelled: 'bg-gray-100 text-gray-500',
 }
 
-export default function BookingDetailPopup({ booking, adminUser, onClose, onUpdate }) {
+export default function BookingDetailPopup({ booking, adminUser, onClose, onUpdate, onRefresh }) {
   const [actionLoading, setActionLoading] = useState(false)
+  console.log('Booking object:', booking)
+  console.log('Booking payment:', booking.payments)
 
 async function handleApprove() {
+    console.log('Booking ID:', booking.booking_id)
     setActionLoading(true)
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('bookings')
       .update({ status: 'approved' })
       .eq('booking_id', booking.booking_id)
+      .select()
 
     if (!error) {
       await supabase.from('notifications').insert({
@@ -41,6 +45,11 @@ async function handleApprove() {
         type:    'booking'
       })
       onUpdate(booking.booking_id, { status: 'approved' })
+
+      if (onRefresh) {
+        await onRefresh()
+      }
+
       onClose()
     }
     setActionLoading(false)
@@ -61,20 +70,30 @@ async function handleApprove() {
         type:    'booking'
       })
       onUpdate(booking.booking_id, { status: 'rejected' })
+
+      if (onRefresh) {
+        await onRefresh()
+      }
+
       onClose()
     }
     setActionLoading(false)
   }
 
   async function handleAttendance(status) {
+    console.log('Attendance status being sent:', status)
     setActionLoading(true)
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('bookings')
       .update({
         attendance_status: status,
         checked_by: adminUser.id
       })
       .eq('booking_id', booking.booking_id)
+      .select()
+
+    console.log('Attendance data:', data)
+    console.log('Attendance error:', error)
 
     if (!error) {
       if (status === 'no_show') {
@@ -92,8 +111,13 @@ async function handleApprove() {
         })
       }
       onUpdate(booking.booking_id, { attendance_status: status })
-      onClose()
-    }
+
+      if (onRefresh) {
+        await onRefresh()
+      }
+        onClose()
+      }
+
     setActionLoading(false)
   }
 
@@ -112,6 +136,11 @@ async function handleApprove() {
         type:    'payment'
       })
       onUpdate(booking.booking_id, { payment_status: 'paid' })
+
+      if (onRefresh) {
+        await onRefresh()
+      }
+
       onClose()
     }
     setActionLoading(false)
@@ -165,9 +194,17 @@ async function handleApprove() {
                     <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Fee</span>
                         <span className="font-medium">
-                        {booking.facilities?.requires_payment
-                            ? `RM ${Number(booking.facilities?.price_per_booking).toFixed(2)}`
-                            : 'Free'}
+                        {booking.facilities?.requires_payment ? (
+                          <>
+                            RM {Number(booking.facilities?.price_per_booking).toFixed(2)}
+
+                            {booking.payments?.payment_status === 'paid' && (
+                              <span className="ml-2 text-green-600 font-semibold">
+                                (Paid)
+                              </span>
+                            )}
+                          </>
+                        ) : ('Free')}
                         </span>
                     </div>
                     </div>
@@ -201,16 +238,24 @@ async function handleApprove() {
                         <p className="text-xs text-gray-500 mb-2 font-medium">Update Attendance:</p>
                         <div className="flex gap-3">
                             <button
-                            onClick={() => handleAttendance(booking.booking_id, 'present')}
-                            disabled={actionLoading || booking.attendance_status === 'present'}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
+                              onClick={() => handleAttendance('present')}
+                              disabled={actionLoading || booking.attendance_status !== 'pending'}
+                              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
+                                    booking.attendance_status !== 'pending'
+                                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    }`}                            
                             >
                             Present
                             </button>
                             <button
-                            onClick={() => handleAttendance(booking.booking_id, 'no_show')}
-                            disabled={actionLoading || booking.attendance_status === 'no_show'}
-                            className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
+                            onClick={() => handleAttendance('no_show')}
+                            disabled={actionLoading || booking.attendance_status !== 'pending'}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
+                                  booking.attendance_status !== 'pending'
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-orange-600 hover:bg-orange-700 text-white'
+                                }`}                            
                             >
                             No Show
                             </button>
@@ -219,22 +264,17 @@ async function handleApprove() {
                     )}
 
                     {/* Mark paid — only for approved + requires payment */}
-                    {booking.status === 'approved' && booking.facilities?.requires_payment && (
+                    { booking.status === 'approved' && 
+                      booking.facilities?.requires_payment && 
+                      booking.payments?.payment_status !== 'paid' && (
                         <button
                         onClick={() => handleMarkPaid(booking.booking_id)}
                         disabled={actionLoading}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
                         >
-                        💳 Mark as Paid
+                        Mark as Paid
                         </button>
                     )}
-
-                    {/* <button
-                        onClick={() => setSelectedBooking(null)}
-                        className="w-full border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
-                    >
-                        Close
-                    </button> */}
                     </div>
                     </div>
                 </div>
