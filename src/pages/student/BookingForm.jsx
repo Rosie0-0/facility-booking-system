@@ -205,6 +205,7 @@ export default function BookingForm() {
         booked_name:      user.full_name,
         booked_email:     user.campus_email,
         booked_contact:   user.phone,
+        booked_campus_id: user.campus_id,
         status:           'pending',
         attendance_status: 'pending'
       })

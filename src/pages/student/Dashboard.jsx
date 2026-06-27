@@ -34,6 +34,18 @@ export default function Dashboard() {
       .eq('id', authUser.id)
       .single()
 
+      // Login Navigation to Admin -> require debug
+      // if(error || !data) {
+      //   navigate('/')
+      //   return
+      // }
+
+      // //Redirect admin to admin dashboard
+      // if (data.role === 'admin') {
+      //   navigate('/admin/dashboard', {replace: true})
+      //   return
+      // }
+
     setUser(data)
   }
 
