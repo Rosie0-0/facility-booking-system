@@ -83,7 +83,7 @@ export default function Navbar({ user }) {
           </button>
           <button
             onClick={() => navigate('/notifications')}
-            className="text-sm text-gray-600 hover:text-red-600 font-medium"
+            className="relative text-sm text-gray-600 hover:text-red-600 font-medium"
           >
             Notification
             {unreadCount > 0 && (
