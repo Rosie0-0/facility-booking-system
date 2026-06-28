@@ -50,6 +50,14 @@ export default function ManageFacilities() {
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [deleteConfirm, setDeleteConfirm]   = useState(null)
 
+  const [showEquipForm, setShowEquipForm]   = useState(false)
+  const [equipFacility, setEquipFacility]   = useState(null)
+  const [editEquip, setEditEquip]           = useState(null)
+  const [equipForm, setEquipForm]           = useState({
+    equipment_name: '', quantity: 1, equipment_price: 0
+  })
+  const [equipLoading, setEquipLoading]     = useState(false)
+
   const facilityName = form.facility_name
     .trim()
     .toLowerCase()
@@ -188,6 +196,58 @@ export default function ManageFacilities() {
     setTimeout(() => setSuccess(''), 3000)
   }
 
+  function openAddEquip(facility) {
+  setEquipFacility(facility)
+  setEditEquip(null)
+  setEquipForm({ equipment_name: '', quantity: 1, equipment_price: 0 })
+  setShowEquipForm(true)
+  }
+
+  function openEditEquip(facility, equip) {
+    setEquipFacility(facility)
+    setEditEquip(equip)
+    setEquipForm({
+      equipment_name:  equip.equipment_name,
+      quantity:        equip.quantity,
+      equipment_price: equip.equipment_price,
+    })
+    setShowEquipForm(true)
+  }
+
+  async function handleEquipSubmit() {
+    if (!equipForm.equipment_name) return
+    setEquipLoading(true)
+
+    if (editEquip) {
+      await supabase
+        .from('equipment')
+        .update({
+          equipment_name:  equipForm.equipment_name,
+          quantity:        parseInt(equipForm.quantity),
+          equipment_price: parseFloat(equipForm.equipment_price),
+        })
+        .eq('equipment_id', editEquip.equipment_id)
+    } else {
+      await supabase
+        .from('equipment')
+        .insert({
+          facility_id:     equipFacility.facility_id,
+          equipment_name:  equipForm.equipment_name,
+          quantity:        parseInt(equipForm.quantity),
+          equipment_price: parseFloat(equipForm.equipment_price),
+        })
+    }
+
+    await getFacilities()
+    setShowEquipForm(false)
+    setEquipLoading(false)
+  }
+
+  async function handleEquipDelete(equipId) {
+    await supabase.from('equipment').delete().eq('equipment_id', equipId)
+    await getFacilities()
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <AdminNavbar user={user} />
@@ -289,19 +349,46 @@ export default function ManageFacilities() {
                   </div>
 
                   {/* Equipment list */}
-                  {facility.equipment?.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-400 mb-1">Equipment:</p>
-                      <div className="space-y-1">
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-gray-400 font-medium">Equipment</p>
+                      <button
+                        onClick={() => openAddEquip(facility)}
+                        className="text-xs text-red-600 hover:underline font-medium"
+                      >
+                        + Add
+                      </button>
+                    </div>
+
+                    {facility.equipment?.length > 0 ? (
+                      <div className="space-y-1.5">
                         {facility.equipment.map(eq => (
-                          <div key={eq.equipment_id} className="flex justify-between text-xs text-gray-600">
+                          <div key={eq.equipment_id} className="flex items-center justify-between text-xs text-gray-600">
                             <span>{eq.equipment_name} (x{eq.quantity})</span>
-                            <span>{eq.equipment_price > 0 ? `RM ${Number(eq.equipment_price).toFixed(2)}` : 'Free'}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">
+                                {eq.equipment_price > 0 ? `RM ${Number(eq.equipment_price).toFixed(2)}` : 'Free'}
+                              </span>
+                              <button
+                                onClick={() => openEditEquip(facility, eq)}
+                                className="text-blue-500 hover:underline"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleEquipDelete(eq.equipment_id)}
+                                className="text-red-500 hover:underline"
+                              >
+                                Del
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-xs text-gray-300">No equipment added</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -480,6 +567,70 @@ export default function ManageFacilities() {
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-semibold"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Equipment Add/Edit Popup */}
+      {showEquipForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-bold text-gray-900">
+                {editEquip ? 'Edit Equipment' : 'Add Equipment'}
+              </h3>
+              <button onClick={() => setShowEquipForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">Equipment Name *</label>
+                <input
+                  type="text"
+                  value={equipForm.equipment_name}
+                  onChange={e => setEquipForm({ ...equipForm, equipment_name: e.target.value })}
+                  placeholder="e.g. Projector"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">Quantity *</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={equipForm.quantity}
+                  onChange={e => setEquipForm({ ...equipForm, quantity: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">Price (RM) — 0 for free</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={equipForm.equipment_price}
+                  onChange={e => setEquipForm({ ...equipForm, equipment_price: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => setShowEquipForm(false)}
+                className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEquipSubmit}
+                disabled={equipLoading || !equipForm.equipment_name}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50"
+              >
+                {equipLoading ? 'Saving...' : editEquip ? 'Update' : 'Add'}
               </button>
             </div>
           </div>
