@@ -75,6 +75,21 @@ function FacilityCard({ facility }) {
           </p>
         </div>
 
+        {/* Equipment */}
+        {facility.equipment?.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-1 font-medium">Equipment Provided:</p>
+            <div className="space-y-1">
+              {facility.equipment.map(eq => (
+                <div key={eq.equipment_id} className="flex justify-between text-xs text-gray-600">
+                  <span>{eq.equipment_name} (x{eq.quantity})</span>
+                  <span>{eq.equipment_price > 0 ? `RM ${Number(eq.equipment_price).toFixed(2)}` : 'Free'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Book Now button */}
         <button
           onClick={() => navigate(`/bookings/new?facility=${facility.facility_id}`)}
@@ -122,7 +137,7 @@ export default function Facilities() {
     setLoading(true)
     const { data, error: fetchError } = await supabase
       .from('facilities')
-      .select('*')
+      .select('*, equipment(equipment_id, equipment_name, quantity, equipment_price)')
       .order('facility_name')
 
     if (fetchError) {
