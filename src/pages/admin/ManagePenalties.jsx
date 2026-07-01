@@ -46,8 +46,8 @@ export default function ManagePenalties() {
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }
-    const { data } = await supabase.from('users').select('*').eq('id', authUser.id).single()
-    if (!data || data.role !== 'admin') { navigate('/'); return }
+    const { data } = await supabase.from('admins').select('*').eq('id', authUser.id).single()
+    if (!data) { navigate('/'); return }
     setUser(data)
   }
 

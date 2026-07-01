@@ -25,27 +25,8 @@ export default function Login() {
       return
     }
 
-    // Step 2: Check the email belongs to an active campus member
-    const { data: member, error: memberError } = await supabase
-      .from('campus_members')
-      .select('is_active, role')
-      .eq('campus_email', loginEmail)
-      .single()
-
-    if (memberError || !member) {
-      setError('Email not registered. Please contact admin.')
-      setLoading(false)
-      return
-    }
-
-    if (!member.is_active) {
-      setError('Your account has been deactivated. Please contact admin.')
-      setLoading(false)
-      return
-    }
-
-    // Step 3: Sign in with the campus-issued credentials
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    // Step 2: Sign in with the campus-issued credentials
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email:    loginEmail,
       password: password,
     })
@@ -56,12 +37,42 @@ export default function Login() {
       return
     }
 
-    // Step 4: Redirect based on role (any admin_* department role → admin dashboard)
-    if (member.role?.startsWith('admin')) {
+    const userId = signInData.user.id
+
+    // Step 3: Admins are managed in the admins table → admin UI
+    const { data: admin } = await supabase
+      .from('admins')
+      .select('department')
+      .eq('id', userId)
+      .single()
+
+    if (admin) {
       navigate('/admin/dashboard', { replace: true })
-    } else {
-      navigate('/dashboard', { replace: true })
+      return
     }
+
+    // Step 4: Otherwise must be an active campus member → user UI
+    const { data: member } = await supabase
+      .from('campus_members')
+      .select('is_active')
+      .eq('campus_email', loginEmail)
+      .single()
+
+    if (!member) {
+      await supabase.auth.signOut()
+      setError('Email not registered. Please contact admin.')
+      setLoading(false)
+      return
+    }
+
+    if (!member.is_active) {
+      await supabase.auth.signOut()
+      setError('Your account has been deactivated. Please contact admin.')
+      setLoading(false)
+      return
+    }
+
+    navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -118,7 +129,7 @@ export default function Login() {
               </label>
               <input
                 type="email"
-                placeholder="Enter your campus email"
+                placeholder="Log in using your campus email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -134,7 +145,7 @@ export default function Login() {
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder="Log in using your campus email password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required

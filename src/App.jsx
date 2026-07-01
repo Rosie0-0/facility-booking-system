@@ -14,7 +14,6 @@ import Profile from './pages/student/Profile'
 import AdminDashboard from './pages/admin/Dashboard'
 import ManageBookings from './pages/admin/ManageBookings'
 import AdminFacilities from './pages/admin/ManageFacilities'
-import AdminUsers from './pages/admin/ManageUsers'
 import AdminPenalties from './pages/admin/ManagePenalties'
 import AdminAnnouncements from './pages/admin/Announcements'
 
@@ -35,7 +34,6 @@ function App() {
         <Route path="/admin/dashboard"     element={<AdminDashboard/>}/>
         <Route path="/admin/bookings"      element={<ManageBookings/>}/>
         <Route path="/admin/facilities"    element={<AdminFacilities />} />
-        <Route path="/admin/users"         element={<AdminUsers />} />
         <Route path="/admin/penalties"     element={<AdminPenalties />} />
         <Route path="/admin/announcements" element={<AdminAnnouncements />} />
       </Routes>

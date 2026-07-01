@@ -66,7 +66,7 @@ export default function AdminDashboard() {
     }
 
     const { data, error } = await supabase
-      .from('users')
+      .from('admins')
       .select('*')
       .eq('id', authUser.id)
       .single()
@@ -76,10 +76,6 @@ export default function AdminDashboard() {
       return
     }
 
-    if (data?.role !== 'admin') { 
-      navigate('/dashboard', { replace: true});
-      return 
-    }
     setUser(data)
     setChecking(false)
   }
@@ -96,7 +92,7 @@ export default function AdminDashboard() {
       supabase.from('bookings').select('booking_id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('bookings').select('booking_id', { count: 'exact', head: true }).eq('status', 'approved'),
       supabase.from('users').select('id', { count: 'exact', head: true }),
-      supabase.from('facilities').select('facility_id', { count: 'exact', head: true }),
+      supabase.from('facilities').select('facility_id', { count: 'exact', head: true }).eq('department', user.department),
     ])
 
     setStats({
@@ -168,7 +164,6 @@ export default function AdminDashboard() {
           {[
             { label: 'Manage Bookings',  path: '/admin/bookings'},
             { label: 'Manage Facilities', path: '/admin/facilities'},
-            { label: 'Manage Users',     path: '/admin/users' },
             { label: 'Announcements',    path: '/admin/announcements'},
           ].map(action => (
             <button

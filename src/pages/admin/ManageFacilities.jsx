@@ -69,8 +69,8 @@ export default function ManageFacilities() {
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }
-    const { data } = await supabase.from('users').select('*').eq('id', authUser.id).single()
-    if (!data || data.role !== 'admin') { navigate('/'); return }
+    const { data } = await supabase.from('admins').select('*').eq('id', authUser.id).single()
+    if (!data) { navigate('/'); return }
     setUser(data)
   }
 
@@ -79,6 +79,7 @@ export default function ManageFacilities() {
     const { data } = await supabase
       .from('facilities')
       .select('*, equipment(equipment_id, equipment_name, quantity, equipment_price)')
+      .eq('department', user.department)
       .order('facility_name')
     setFacilities(data || [])
     setLoading(false)
@@ -129,6 +130,7 @@ export default function ManageFacilities() {
       closing_time:      form.closing_time,
       status:            form.status,
       image_path:        defaultImage,
+      department:        user.department,
     }
 
     if (editFacility) {

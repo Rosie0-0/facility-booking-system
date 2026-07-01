@@ -66,9 +66,9 @@ export default function ManageBookings() {
     if (!authUser) { navigate('/'); return }
 
     const { data } = await supabase
-      .from('users').select('*').eq('id', authUser.id).single()
+      .from('admins').select('*').eq('id', authUser.id).single()
 
-    if (!data || data.role !== 'admin') { navigate('/'); return }
+    if (!data) { navigate('/'); return }
     setUser(data)
   }
 
