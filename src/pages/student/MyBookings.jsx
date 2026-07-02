@@ -38,7 +38,7 @@ export default function MyBookings() {
   const [user, setUser]           = useState(null)
   const [bookings, setBookings]   = useState([])
   const [loading, setLoading]     = useState(true)
-  const [searchParams] = useSearchParams()
+  const [searchParams]            = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all')
   const [page, setPage]           = useState(1)
   const [hasMore, setHasMore]     = useState(false)
