@@ -149,7 +149,7 @@ export default function Announcements() {
 
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-400">
-                📢 Will be sent to all users ({historyLoading ? '...' : 'students, lecturers & staff'})
+                📢 Will be sent to all campus users
               </p>
               <button
                 onClick={handleSend}

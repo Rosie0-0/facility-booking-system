@@ -4,33 +4,28 @@ import { supabase } from '../../lib/supabase'
 import { formatFacilityName, getFacilityImageUrl } from '../../lib/facilityImages'
 import AdminNavbar from '../../components/AdminNavbar'
 
-const FACILITY_NAMES = [
-  'discussion_room_1', 'discussion_room_2', 'discussion_room_3',
-  'discussion_room_4', 'discussion_room_5', 'music_room',
-  'pool_table', 'table_tennis', 'stem_lab', 'event_area',
-  'basketball_court', 'tennis_court', 'sport_field', 'futsal_court'
-]
-
 const defaultImage = "/facilities/default_facility.jpg"
 
-const STATUS_OPTIONS = ['available', 'maintenance', 'closed']
-
-const statusColors = {
-  available:   'bg-green-100 text-green-700',
-  maintenance: 'bg-yellow-100 text-yellow-700',
-  closed:      'bg-red-100 text-red-700',
-}
+const BOOKING_MODES = [
+  { value: 'slot',  label: 'Slot-based (fixed time slots)' },
+  { value: 'event', label: 'Event (multi-day date range)' },
+]
 
 const emptyForm = {
   facility_name: 'discussion_room_1',
   location: '',
-  capacity: '',
-  max_booking_hours: '',
+  min_capacity: 1,
+  max_capacity: '',
+  slot_hours: 1,
+  max_slots: 1,
   requires_payment: false,
   price_per_booking: 0,
   opening_time: '08:00',
   closing_time: '17:00',
-  status: 'available',
+  is_available: true,
+  booking_mode: 'slot',
+  requires_approval: false,
+  booking_instructions: '',
 }
 
 export default function ManageFacilities() {
@@ -97,13 +92,18 @@ export default function ManageFacilities() {
     setForm({
       facility_name:     facility.facility_name,
       location:          facility.location || '',
-      capacity:          facility.capacity || '',
-      max_booking_hours: facility.max_booking_hours || '',
+      min_capacity:      facility.min_capacity ?? 1,
+      max_capacity:      facility.max_capacity ?? '',
+      slot_hours:        facility.slot_hours ?? 1,
+      max_slots:         facility.max_slots ?? 1,
       requires_payment:  facility.requires_payment || false,
       price_per_booking: facility.price_per_booking || 0,
       opening_time:      facility.opening_time?.slice(0, 5) || '08:00',
       closing_time:      facility.closing_time?.slice(0, 5) || '17:00',
-      status:            facility.status || 'available',
+      is_available:      facility.is_available ?? true,
+      booking_mode:      facility.booking_mode || 'slot',
+      requires_approval: facility.requires_approval || false,
+      booking_instructions: facility.booking_instructions || '',
     })
     setError('')
     setShowForm(true)
@@ -111,7 +111,7 @@ export default function ManageFacilities() {
   }
 
   async function handleSubmit() {
-    if (!form.location || !form.capacity) {
+    if (!form.location || !form.max_capacity) {
       setError('Please fill in all required fields.')
       return
     }
@@ -122,15 +122,20 @@ export default function ManageFacilities() {
     const payload = {
       facility_name:     form.facility_name,
       location:          form.location,
-      capacity:          parseInt(form.capacity),
-      max_booking_hours: form.max_booking_hours ? parseInt(form.max_booking_hours) : null,
+      min_capacity:      parseInt(form.min_capacity) || 1,
+      max_capacity:      parseInt(form.max_capacity),
+      slot_hours:        parseInt(form.slot_hours) || 1,
+      max_slots:         parseInt(form.max_slots) || 1,
       requires_payment:  form.requires_payment,
       price_per_booking: form.requires_payment ? parseFloat(form.price_per_booking) : 0,
       opening_time:      form.opening_time,
       closing_time:      form.closing_time,
-      status:            form.status,
+      is_available:      form.is_available,
       image_path:        defaultImage,
       department:        user.department,
+      booking_mode:      form.booking_mode,
+      requires_approval: form.requires_approval,
+      booking_instructions: form.booking_instructions || null,
     }
 
     if (editFacility) {
@@ -302,9 +307,11 @@ export default function ManageFacilities() {
                     />
                   </label>
 
-                  {/* Status badge */}
-                  <span className={`absolute top-2 left-2 text-xs px-2 py-1 rounded-full font-medium capitalize ${statusColors[facility.status]}`}>
-                    {facility.status}
+                  {/* Availability badge */}
+                  <span className={`absolute top-2 left-2 text-xs px-2 py-1 rounded-full font-medium ${
+                    facility.is_available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {facility.is_available ? 'Available' : 'Unavailable'}
                   </span>
 
                   {/* Dropdown menu */}
@@ -344,8 +351,8 @@ export default function ManageFacilities() {
                   <p className="text-xs text-gray-500 mb-3">{facility.location}</p>
 
                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                    <p><span className="text-gray-400">Capacity:</span> {facility.capacity >= 999 ? 'No limit' : facility.capacity}</p>
-                    <p><span className="text-gray-400">Max hrs:</span> {facility.max_booking_hours ?? 'No limit'}</p>
+                    <p><span className="text-gray-400">Capacity:</span> {facility.min_capacity}–{facility.max_capacity >= 999 ? '∞' : facility.max_capacity} pax</p>
+                    <p><span className="text-gray-400">Slots:</span> {facility.slot_hours}h × up to {facility.max_slots}</p>
                     <p><span className="text-gray-400">Hours:</span> {facility.opening_time?.slice(0,5)} – {facility.closing_time?.slice(0,5)}</p>
                     <p><span className="text-gray-400">Fee:</span> {facility.requires_payment ? `RM ${Number(facility.price_per_booking).toFixed(2)}` : 'Free'}</p>
                   </div>
@@ -442,28 +449,51 @@ export default function ManageFacilities() {
                 />
               </div>
 
-              {/* Capacity */}
-              <div>
-                <label className="text-xs text-gray-500 font-medium block mb-1">Capacity *</label>
-                <input
-                  type="number"
-                  value={form.capacity}
-                  onChange={e => setForm({ ...form, capacity: e.target.value })}
-                  placeholder="999 for no limit"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
+              {/* Capacity min / max */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium block mb-1">Min Capacity (pax)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.min_capacity}
+                    onChange={e => setForm({ ...form, min_capacity: e.target.value })}
+                    placeholder="1"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium block mb-1">Max Capacity (pax) *</label>
+                  <input
+                    type="number"
+                    value={form.max_capacity}
+                    onChange={e => setForm({ ...form, max_capacity: e.target.value })}
+                    placeholder="999 for no limit"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
               </div>
 
-              {/* Max Booking Hours */}
-              <div>
-                <label className="text-xs text-gray-500 font-medium block mb-1">Max Booking Hours</label>
-                <input
-                  type="number"
-                  value={form.max_booking_hours}
-                  onChange={e => setForm({ ...form, max_booking_hours: e.target.value })}
-                  placeholder="Leave empty for no limit"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
+              {/* Slot length & max slots (slot mode) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium block mb-1">Slot Length (hours)</label>
+                  <input
+                    type="number" min="1"
+                    value={form.slot_hours}
+                    onChange={e => setForm({ ...form, slot_hours: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium block mb-1">Max Slots per Booking</label>
+                  <input
+                    type="number" min="1"
+                    value={form.max_slots}
+                    onChange={e => setForm({ ...form, max_slots: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
               </div>
 
               {/* Opening & Closing Time */}
@@ -488,18 +518,60 @@ export default function ManageFacilities() {
                 </div>
               </div>
 
-              {/* Status */}
+              {/* Availability toggle */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_available"
+                  checked={form.is_available}
+                  onChange={e => setForm({ ...form, is_available: e.target.checked })}
+                  className="w-4 h-4 accent-red-600"
+                />
+                <label htmlFor="is_available" className="text-sm text-gray-700">
+                  Available for booking (uncheck to mark unavailable / under maintenance)
+                </label>
+              </div>
+
+              {/* Booking Mode */}
               <div>
-                <label className="text-xs text-gray-500 font-medium block mb-1">Status *</label>
+                <label className="text-xs text-gray-500 font-medium block mb-1">Booking Mode *</label>
                 <select
-                  value={form.status}
-                  onChange={e => setForm({ ...form, status: e.target.value })}
+                  value={form.booking_mode}
+                  onChange={e => setForm({ ...form, booking_mode: e.target.value })}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 >
-                  {STATUS_OPTIONS.map(s => (
-                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  {BOOKING_MODES.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Requires Approval */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="requires_approval"
+                  checked={form.requires_approval}
+                  onChange={e => setForm({ ...form, requires_approval: e.target.checked })}
+                  className="w-4 h-4 accent-red-600"
+                />
+                <label htmlFor="requires_approval" className="text-sm text-gray-700">
+                  Requires admin approval before confirming
+                </label>
+              </div>
+
+              {/* Booking Instructions */}
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">
+                  Booking Instructions (one per line — shown on the booking page)
+                </label>
+                <textarea
+                  value={form.booking_instructions}
+                  onChange={e => setForm({ ...form, booking_instructions: e.target.value })}
+                  rows={4}
+                  placeholder={'Collect the access key from the counter\nPay at the AFM counter on arrival'}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                />
               </div>
 
               {/* Requires Payment */}

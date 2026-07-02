@@ -175,7 +175,7 @@ export default function Login() {
             {/* Forgot password message*/}
             {showForgotMsg && (
               <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm px-4 py-3 rounded-lg">
-                Please contact your campus admin or IT helpdesk to reset your password.
+                You can reset your password at the official INTI campus portal.
               </div>
             )}
 

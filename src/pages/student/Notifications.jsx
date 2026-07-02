@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import Navbar from '../../components/Navbar'
-import Footer from '../../components/Footer'
+import StudentLayout from '../../components/StudentLayout'
 
 const TABS = ['all', 'booking', 'payment', 'penalty', 'general']
 
@@ -98,6 +97,11 @@ export default function Notifications() {
     setUnreadCount(prev => Math.max(0, prev - 1))
   }
 
+  function openNotification(n) {
+    if (!n.is_read) markAsRead(n.notification_id)
+    if (n.booking_id) navigate(`/bookings/${n.booking_id}`)
+  }
+
   async function markAllAsRead() {
     await supabase
       .from('notifications')
@@ -110,10 +114,8 @@ export default function Notifications() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar user={user} />
-
-      <div className="max-w-3xl mx-auto px-6 py-8 flex-1 w-full">
+    <StudentLayout user={user}>
+      <div className="max-w-3xl mx-auto px-6 py-8 w-full">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -164,7 +166,7 @@ export default function Notifications() {
             {notifications.map(notification => (
               <div
                 key={notification.notification_id}
-                onClick={() => !notification.is_read && markAsRead(notification.notification_id)}
+                onClick={() => openNotification(notification)}
                 className={`rounded-xl border p-4 cursor-pointer transition ${
                   notification.is_read
                     ? 'bg-white border-gray-100'
@@ -204,8 +206,6 @@ export default function Notifications() {
         )}
 
       </div>
-
-      <Footer />
-    </div>
+    </StudentLayout>
   )
 }

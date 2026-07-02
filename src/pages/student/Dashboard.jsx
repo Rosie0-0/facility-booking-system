@@ -1,211 +1,224 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import Navbar from '../../components/Navbar'
-import Footer from '../../components/Footer'
+import StudentLayout from '../../components/StudentLayout'
+import {
+  formatFacilityName,
+  getFacilityImageUrl,
+  getFacilityPlaceholder,
+} from '../../lib/facilityImages'
 
 const campusImg = '/Inti-campus.jpg'
+
+function formatTime(t) {
+  return t ? t.slice(0, 5) : '—'
+}
+
+function isDiscussionRoom(f) {
+  return f.facility_name?.startsWith('discussion_room')
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
-  const [bookingCounts, setBookingCounts] = useState({
-    pending: 0,
-    booked: 0,
-    history: 0
-  })
-  const [activeTab, setActiveTab] = useState('pending')
+  const [facilities, setFacilities] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [info, setInfo] = useState(null)       // facility for the info popup
+  const [showRooms, setShowRooms] = useState(false) // library rooms modal
 
-  useEffect(() => {
-    getUser()
-  }, [])
-
-  useEffect(() => {
-    if (user) getBookingCounts()
-  }, [user])
+  useEffect(() => { getUser() }, [])
+  useEffect(() => { getFacilities() }, [])
 
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }
-
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single()
-
-      // Login Navigation to Admin -> require debug
-      // if(error || !data) {
-      //   navigate('/')
-      //   return
-      // }
-
-      // //Redirect admin to admin dashboard
-      // if (data.role === 'admin') {
-      //   navigate('/admin/dashboard', {replace: true})
-      //   return
-      // }
-
+    const { data } = await supabase.from('users').select('*').eq('id', authUser.id).single()
     setUser(data)
   }
 
-  async function getBookingCounts() {
+  async function getFacilities() {
     const { data } = await supabase
-      .from('bookings')
-      .select('status')
-      .eq('user_id', user.id)
-
-    if (data) {
-      setBookingCounts({
-        pending: data.filter(b => b.status === 'pending').length,
-        booked:  data.filter(b => b.status === 'approved').length,
-        history: data.filter(b => ['rejected', 'cancelled'].includes(b.status)).length
-      })
-    }
+      .from('facilities')
+      .select('*, equipment(equipment_id, equipment_name, quantity, equipment_price)')
+      .order('facility_name')
+    setFacilities(data || [])
+    setLoading(false)
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    navigate('/')
-  }
-
-  function scrollToFooter() {
-    document.getElementById('footer').scrollIntoView({ behavior: 'smooth' })
-  }
+  const discussionRooms = facilities.filter(isDiscussionRoom)
+  const otherFacilities = facilities.filter(f => !isDiscussionRoom(f))
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-
-      {/* Reusable Navbar Component */}
-      <Navbar user={user} />
-
-      {/* Hero Section */}
-      <div className="relative h-80 overflow-hidden">
-        <img
-          src={campusImg}
-          alt="INTI Campus"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50 flex flex-col justify-center px-12">
-          <h1 className="text-white text-4xl font-bold leading-tight">
+    <StudentLayout user={user}>
+      {/* Welcome banner */}
+      <div className="relative h-56 overflow-hidden">
+        <img src={campusImg} alt="INTI Campus" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/50 flex flex-col justify-center px-8 md:px-12">
+          <h1 className="text-white text-3xl md:text-4xl font-bold leading-tight">
             Welcome to INTI Facility<br />Booking Portal
           </h1>
-          <p className="text-gray-200 mt-2 text-sm">
-            Reserve campus facilities easily and efficiently.
-          </p>
-        </div>
-
-        {/* Booking status tabs */}
-        <div className="absolute bottom-0 left-12 flex gap-2">
-          {[
-            { label: 'Pending', tab: 'pending' },
-            { label: 'Booked',  tab: 'upcoming' },
-            { label: 'History', tab: 'completed' },
-          ].map(item => (
-            <button
-              key={item.tab}
-              onClick={() => navigate(`/bookings?tab=${item.tab}`)}
-              className="px-6 py-2 text-sm font-medium rounded-t-lg transition bg-white/20 text-white hover:bg-white/30"
-            >
-              {item.label}
-            </button>
-          ))}
+          <p className="text-gray-200 mt-2 text-sm">Reserve campus facilities easily and efficiently.</p>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto px-6 py-6 flex-1">
+      {/* Make Your Booking */}
+      <div className="max-w-7xl mx-auto px-6 py-8 w-full">
+        <h2 className="text-2xl font-bold text-gray-900">Make Your Booking</h2>
+        <p className="text-sm text-gray-500 mb-6">Select the facility to make a booking</p>
 
-        {/* Booking counts */}
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
-          <div className="flex gap-8">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-500">
-                {bookingCounts.pending}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">Pending</p>
-            </div>
-            <div className="w-px bg-gray-100" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-500">
-                {bookingCounts.booked}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">Booked</p>
-            </div>
-            <div className="w-px bg-gray-100" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-gray-400">
-                {bookingCounts.history}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">History</p>
-            </div>
+        {loading ? (
+          <p className="text-gray-400 text-sm">Loading facilities...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Grouped library discussion rooms */}
+            {discussionRooms.length > 0 && (
+              <div
+                onClick={() => setShowRooms(true)}
+                className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md cursor-pointer transition"
+              >
+                <div className="h-44 bg-gray-100 overflow-hidden relative">
+                  <img src="/facilities/discussion_room.jpg" alt="Library Discussion Room" className="w-full h-full object-cover" />
+                  <span className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                    {discussionRooms.length} rooms
+                  </span>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="font-semibold text-gray-900 text-sm">Library Discussion Room</p>
+                  <p className="text-xs text-gray-400">Level 6, Library</p>
+                </div>
+              </div>
+            )}
+
+            {otherFacilities.map(f => (
+              <FacilityCard key={f.facility_id} facility={f} onInfo={() => setInfo(f)} />
+            ))}
           </div>
-        </div>
-
-        {/* Welcome message */}
-        {user && (
-          <p className="text-gray-600 mb-6 text-sm">
-            Welcome back, <span className="font-semibold text-gray-900">{user.full_name}</span>!
-          </p>
         )}
-
-        {/* Quick action cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* Quick Booking */}
-          <div
-            onClick={() => navigate('/facilities')}
-            className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-md transition border border-transparent hover:border-red-200"
-          >
-            <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Quick Booking</h3>
-            <p className="text-sm text-gray-500">
-              Make a new booking with a few simple steps.
-            </p>
-          </div>
-
-          {/* My Bookings */}
-          <div
-            onClick={() => navigate('/bookings')}
-            className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-md transition border border-transparent hover:border-blue-200"
-          >
-            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-1">My Bookings</h3>
-            <p className="text-sm text-gray-500">
-              View your upcoming and past bookings.
-            </p>
-          </div>
-
-          {/* Facilities */}
-          <div
-            onClick={() => navigate('/facilities')}
-            className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-md transition border border-transparent hover:border-green-200"
-          >
-            <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Facilities</h3>
-            <p className="text-sm text-gray-500">
-              Explore and book available facilities.
-            </p>
-          </div>
-
-        </div>
       </div>
 
-      {/* Reusable Footer Component */}
-      <Footer />
+      {/* Library rooms modal */}
+      {showRooms && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
+              <h3 className="font-bold text-gray-900">Library Discussion Rooms</h3>
+              <button onClick={() => setShowRooms(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {discussionRooms.map(room => (
+                <FacilityCard key={room.facility_id} facility={room} onInfo={() => setInfo(room)} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
+      {info && (
+        <InfoPopup
+          facility={info}
+          onClose={() => setInfo(null)}
+          onBook={() => navigate(`/bookings/new?facility=${info.facility_id}`)}
+        />
+      )}
+    </StudentLayout>
+  )
+}
+
+function FacilityCard({ facility, onInfo }) {
+  const navigate = useNavigate()
+  const [src, setSrc] = useState(getFacilityImageUrl(facility.image_path, facility.facility_name))
+  const available = facility.is_available
+  const book = () => available && navigate(`/bookings/new?facility=${facility.facility_id}`)
+
+  return (
+    <div className={`bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition ${
+      available ? 'hover:shadow-md' : 'opacity-70'
+    }`}>
+      <div onClick={book} className={`h-44 bg-gray-100 overflow-hidden relative ${available ? 'cursor-pointer' : ''}`}>
+        <img
+          src={src} alt={formatFacilityName(facility.facility_name)}
+          className="w-full h-full object-cover"
+          onError={() => setSrc(getFacilityPlaceholder())}
+        />
+        {!available && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="text-white text-sm font-semibold">Unavailable</span>
+          </div>
+        )}
+      </div>
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div onClick={book} className={available ? 'cursor-pointer' : ''}>
+          <p className="font-semibold text-gray-900 text-sm">{formatFacilityName(facility.facility_name)}</p>
+          <p className="text-xs text-gray-400">{facility.location}</p>
+        </div>
+        <button
+          onClick={onInfo}
+          title="Facility details"
+          className="w-7 h-7 shrink-0 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50 flex items-center justify-center text-xs font-bold"
+        >
+          i
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function InfoPopup({ facility, onClose, onBook }) {
+  const available = facility.is_available
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <img
+          src={getFacilityImageUrl(facility.image_path, facility.facility_name)}
+          alt={formatFacilityName(facility.facility_name)}
+          className="w-full h-44 object-cover"
+          onError={e => e.target.src = getFacilityPlaceholder()}
+        />
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-gray-900">{formatFacilityName(facility.facility_name)}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">{facility.location}</p>
+
+          <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 mb-4">
+            <p><span className="text-gray-400">Capacity:</span> {facility.min_capacity}–{facility.max_capacity >= 999 ? '∞' : facility.max_capacity} pax</p>
+            <p><span className="text-gray-400">Hours:</span> {formatTime(facility.opening_time)} – {formatTime(facility.closing_time)}</p>
+            <p><span className="text-gray-400">Booking:</span> {facility.booking_mode === 'event' ? 'Date range' : `${facility.slot_hours}h slot${facility.max_slots > 1 ? ` × up to ${facility.max_slots}` : ''}`}</p>
+            <p><span className="text-gray-400">Fee:</span> {facility.requires_payment ? `RM ${Number(facility.price_per_booking).toFixed(2)}` : 'Free'}</p>
+          </div>
+
+          {facility.requires_approval && (
+            <p className="text-xs text-yellow-700 bg-yellow-50 rounded-lg px-3 py-2 mb-4">
+              This facility requires admin approval before your booking is confirmed.
+            </p>
+          )}
+
+          {facility.equipment?.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 font-medium mb-1">Equipment provided</p>
+              <div className="space-y-1">
+                {facility.equipment.map(eq => (
+                  <div key={eq.equipment_id} className="flex justify-between text-xs text-gray-600">
+                    <span>{eq.equipment_name} (x{eq.quantity})</span>
+                    <span>{eq.equipment_price > 0 ? `RM ${Number(eq.equipment_price).toFixed(2)}` : 'Free'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={onBook}
+            disabled={!available}
+            className={`w-full py-2.5 rounded-lg text-sm font-semibold transition ${
+              available ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {available ? 'Book Now' : 'Unavailable'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

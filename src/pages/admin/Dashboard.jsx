@@ -21,9 +21,10 @@ function formatTime(datetime) {
 
 const statusColors = {
   pending:   'bg-yellow-100 text-yellow-700',
-  approved:  'bg-green-100 text-green-700',
+  confirmed: 'bg-green-100 text-green-700',
   rejected:  'bg-red-100 text-red-700',
   cancelled: 'bg-gray-100 text-gray-500',
+  released:  'bg-orange-100 text-orange-700',
 }
 
 
@@ -35,8 +36,7 @@ export default function AdminDashboard() {
   const [stats, setStats]     = useState({
     totalBookings: 0,
     pending:       0,
-    approved:      0,
-    totalUsers:    0,
+    confirmed:     0,
     totalFacilities: 0,
   })
   const [recentBookings, setRecentBookings] = useState([])
@@ -84,44 +84,39 @@ export default function AdminDashboard() {
     const [
       totalBookings,
       pending,
-      approved,
-      totalUsers,
+      confirmed,
       totalFacilities
     ] = await Promise.all([
       supabase.from('bookings').select('booking_id', { count: 'exact', head: true }),
       supabase.from('bookings').select('booking_id', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('bookings').select('booking_id', { count: 'exact', head: true }).eq('status', 'approved'),
-      supabase.from('users').select('id', { count: 'exact', head: true }),
+      supabase.from('bookings').select('booking_id', { count: 'exact', head: true }).eq('status', 'confirmed'),
       supabase.from('facilities').select('facility_id', { count: 'exact', head: true }).eq('department', user.department),
     ])
 
     setStats({
       totalBookings:   totalBookings.count   || 0,
       pending:         pending.count         || 0,
-      approved:        approved.count        || 0,
-      totalUsers:      totalUsers.count      || 0,
+      confirmed:       confirmed.count       || 0,
       totalFacilities: totalFacilities.count || 0,
     })
   }
 
   async function getRecentBookings() {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('bookings')
-      .select('*, facilities(facility_name, location, requires_payment, price_per_booking), payments(payment_status)')
+      .select('*, facilities(facility_name, location, requires_payment, price_per_booking, requires_approval, booking_mode), payments(payment_status)')
       .order('created_at', { ascending: false })
       .limit(10)
 
-    console.log('Recent bookings:', data)
     setRecentBookings(data || [])
     setLoading(false)
   }
 
   const statCards = [
-    { label: 'Total Bookings',  value: stats.totalBookings,   color: 'text-blue-600',   bg: 'bg-blue-100',   icon: '📋' },
-    { label: 'Pending',         value: stats.pending,         color: 'text-yellow-600', bg: 'bg-yellow-100', icon: '⏳' },
-    { label: 'Approved',        value: stats.approved,        color: 'text-green-600',  bg: 'bg-green-100',  icon: '✅' },
-    { label: 'Total Users',     value: stats.totalUsers,      color: 'text-purple-600', bg: 'bg-purple-100', icon: '👥' },
-    { label: 'Facilities',      value: stats.totalFacilities, color: 'text-red-600',    bg: 'bg-red-100',    icon: '🏢' },
+    { label: 'Total Bookings',  value: stats.totalBookings,   color: 'text-blue-600',   bg: 'bg-blue-100',   icon: '📋', path: '/admin/bookings' },
+    { label: 'Pending',         value: stats.pending,         color: 'text-yellow-600', bg: 'bg-yellow-100', icon: '⏳', path: '/admin/bookings?tab=pending' },
+    { label: 'Confirmed',       value: stats.confirmed,       color: 'text-green-600',  bg: 'bg-green-100',  icon: '✅', path: '/admin/bookings?tab=confirmed' },
+    { label: 'Facilities',      value: stats.totalFacilities, color: 'text-red-600',    bg: 'bg-red-100',    icon: '🏢', path: '/admin/facilities' },
   ]
 
   if (checking) {
@@ -146,32 +141,19 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {/* Stats row — clickable shortcuts */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {statCards.map(stat => (
-            <div key={stat.label} className={`rounded-xl shadow-sm p-5 ${stat.bg}`}>
+            <button
+              key={stat.label}
+              onClick={() => navigate(stat.path)}
+              className={`text-left rounded-xl shadow-sm p-5 transition hover:shadow-md ${stat.bg}`}
+            >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-2xl">{stat.icon}</span>
                 <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
               </div>
               <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Quick actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Manage Bookings',  path: '/admin/bookings'},
-            { label: 'Manage Facilities', path: '/admin/facilities'},
-            { label: 'Announcements',    path: '/admin/announcements'},
-          ].map(action => (
-            <button
-              key={action.path}
-              onClick={() => navigate(action.path)}
-              className={`${action.color} hover:bg-gray-200 text-gray-600 rounded-xl p-4 text-sm font-semibold text-left transition shadow-md`}
-            >
-              {action.label} →
             </button>
           ))}
         </div>

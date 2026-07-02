@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import Navbar from '../../components/Navbar'
-import Footer from '../../components/Footer'
+import StudentLayout from '../../components/StudentLayout'
 
 export default function Profile() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
   const [user, setUser]             = useState(null)
-  const [phone, setPhone]           = useState('')
   const [avatarUrl, setAvatarUrl]   = useState('')
   const [uploading, setUploading]   = useState(false)
-  const [saving, setSaving]         = useState(false)
   const [success, setSuccess]       = useState('')
   const [error, setError]           = useState('')
   const [penalties, setPenalties]   = useState([])
@@ -33,7 +30,6 @@ export default function Profile() {
       .single()
 
     setUser(data)
-    setPhone(data?.phone || '')
     setAvatarUrl(data?.avatar_url || '')
 
     // Get active penalties
@@ -103,63 +99,19 @@ export default function Profile() {
     setUploading(false)
   }
 
-  async function handleSavePhone() {
-    if (!phone.trim()) {
-      setError('Phone number cannot be empty.')
-      return
-    }
-
-    // Validate Malaysian phone format
-    const phoneRegex = /^01[0-9]{8,9}$/
-    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-      setError('Please enter a valid Malaysian phone number (e.g. 0123456789).')
-      return
-    }
-
-    setSaving(true)
-    setError('')
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ phone: phone.trim() })
-      .eq('id', user.id)
-
-    if (updateError) {
-      setError(updateError.message)
-    } else {
-      setSuccess('Phone number updated successfully!')
-      setTimeout(() => setSuccess(''), 3000)
-    }
-
-    setSaving(false)
-  }
-
-  function getInitials(name) {
-    if (!name) return '?'
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-  }
-
-  function formatRole(role) {
-    return role ? role.charAt(0).toUpperCase() + role.slice(1) : '—'
-  }
-
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
-        <Navbar user={user} />
-        <div className="flex-1 flex items-center justify-center">
+      <StudentLayout user={user}>
+        <div className="flex items-center justify-center py-32">
           <p className="text-gray-400">Loading...</p>
         </div>
-        <Footer />
-      </div>
+      </StudentLayout>
     )
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar user={user} />
-
-      <div className="max-w-2xl mx-auto px-6 py-8 flex-1 w-full">
+    <StudentLayout user={user}>
+      <div className="max-w-2xl mx-auto px-6 py-8 w-full">
 
         <h1 className="text-3xl font-bold text-gray-900 mb-6">My Profile</h1>
 
@@ -238,9 +190,7 @@ export default function Profile() {
             </div>
 
             <h2 className="text-xl font-bold text-gray-900 mt-4">{user?.full_name}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {formatRole(user?.role)} · {user?.campus_id}
-            </p>
+            <p className="text-sm text-gray-500 mt-1">{user?.campus_id}</p>
           </div>
 
           {/* Profile details */}
@@ -261,43 +211,15 @@ export default function Profile() {
               <span className="text-sm font-medium text-gray-900">{user?.campus_email}</span>
             </div>
 
-            <div className="flex justify-between py-3 border-b border-gray-100">
-              <span className="text-sm text-gray-500">Role</span>
-              <span className="text-sm font-medium text-gray-900">{formatRole(user?.role)}</span>
-            </div>
-
-            {/* Editable phone */}
-            <div className="flex justify-between items-center py-3">
+            <div className="flex justify-between py-3">
               <span className="text-sm text-gray-500">Phone</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="01XXXXXXXX"
-                  className="text-sm text-right border border-gray-200 rounded-lg px-3 py-1.5 w-36 focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-                <button
-                  onClick={handleSavePhone}
-                  disabled={saving}
-                  className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition disabled:opacity-50"
-                >
-                  {saving ? '...' : 'Save'}
-                </button>
-              </div>
+              <span className="text-sm font-medium text-gray-900">{user?.phone || '—'}</span>
             </div>
 
           </div>
         </div>
 
-        {/* Password note */}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-500 text-center">
-          🔒 To change your password, please contact your campus admin or IT helpdesk.
-        </div>
-
       </div>
-
-      <Footer />
-    </div>
+    </StudentLayout>
   )
 }
