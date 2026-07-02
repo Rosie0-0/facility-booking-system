@@ -38,6 +38,7 @@ export default function ManagePenalties() {
   const [selectedReason, setSelectedReason]   = useState('no_show')
   const [issueLoading, setIssueLoading]       = useState(false)
   const [searchLoading, setSearchLoading]     = useState(false)
+  const [searched, setSearched]               = useState(false)
   const [issueResult, setIssueResult]         = useState(null) // 'warning1' | 'warning2' | 'penalty'
 
   useEffect(() => { getUser() }, [])
@@ -46,8 +47,8 @@ export default function ManagePenalties() {
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }
-    const { data } = await supabase.from('users').select('*').eq('id', authUser.id).single()
-    if (!data || data.role !== 'admin') { navigate('/'); return }
+    const { data } = await supabase.from('admins').select('*').eq('id', authUser.id).single()
+    if (!data) { navigate('/'); return }
     setUser(data)
   }
 
@@ -81,10 +82,21 @@ export default function ManagePenalties() {
     })
   }
 
-  async function handleLift(penaltyId) {
-    await supabase.from('penalties').update({ status: 'lifted' }).eq('penalty_id', penaltyId)
+  async function handleToggleLift(penalty) {
+    const lifting = penalty.status === 'active'
+    const confirmMsg = lifting
+      ? 'Lift this penalty? The user will regain booking access from this penalty.'
+      : 'Unlift this penalty? It will count against the user again for another 14 days.'
+    if (!window.confirm(confirmMsg)) return
+
+    const updates = lifting
+      ? { status: 'lifted' }
+      // reactivating: push lift_at 14 days out so the nightly auto-lift doesn't re-lift it
+      : { status: 'active', lift_at: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)) }
+
+    await supabase.from('penalties').update(updates).eq('penalty_id', penalty.penalty_id)
     setPenalties(prev => prev.map(p =>
-      p.penalty_id === penaltyId ? { ...p, status: 'lifted' } : p
+      p.penalty_id === penalty.penalty_id ? { ...p, ...updates } : p
     ))
     await getCounts()
   }
@@ -92,6 +104,7 @@ export default function ManagePenalties() {
   async function searchUser() {
     if (!searchId.trim()) return
     setSearchLoading(true)
+    setSearched(true)
     setFoundUser(null)
     setUserBookings([])
     setUserPenalties([])
@@ -115,7 +128,7 @@ export default function ManagePenalties() {
       .from('bookings')
       .select('*, facilities(facility_name)')
       .eq('user_id', userData.id)
-      .eq('status', 'approved')
+      .eq('status', 'confirmed')
       .order('booking_date', { ascending: false })
 
     setUserBookings(bookings || [])
@@ -189,6 +202,7 @@ export default function ManagePenalties() {
     setSelectedBooking('')
     setSelectedReason('no_show')
     setIssueResult(null)
+    setSearched(false)
   }
 
   const reasonColors = {
@@ -299,14 +313,12 @@ export default function ManagePenalties() {
                     <td className="px-6 py-4 text-sm text-gray-700">{formatDate(p.created_at)}</td>
                     <td className="px-6 py-4 text-sm text-gray-700">{formatDate(p.lift_at)}</td>
                     <td className="px-6 py-4">
-                      {p.status === 'active' && (
-                        <button
-                          onClick={() => handleLift(p.penalty_id)}
-                          className="text-xs text-blue-600 hover:underline font-medium"
-                        >
-                          Lift
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleToggleLift(p)}
+                        className="text-xs text-blue-600 hover:underline font-medium"
+                      >
+                        {p.status === 'active' ? 'Lift' : 'Unlift'}
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -350,7 +362,7 @@ export default function ManagePenalties() {
                       <input
                         type="text"
                         value={searchId}
-                        onChange={e => setSearchId(e.target.value.toUpperCase())}
+                        onChange={e => { setSearchId(e.target.value.toUpperCase()); setSearched(false) }}
                         onKeyDown={e => e.key === 'Enter' && searchUser()}
                         placeholder="e.g. STU001"
                         className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -430,7 +442,7 @@ export default function ManagePenalties() {
                     </>
                   )}
 
-                  {searchId && !foundUser && !searchLoading && (
+                  {searched && !foundUser && !searchLoading && (
                     <p className="text-sm text-red-500">User not found. Check the Campus ID.</p>
                   )}
                 </>

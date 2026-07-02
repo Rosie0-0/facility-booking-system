@@ -11,7 +11,7 @@ async function createAuthUsers() {
   // Get all campus members including their password
   const { data: members, error } = await supabase
     .from('campus_members')
-    .select('campus_id, campus_email, full_name, phone, role, default_password')
+    .select('campus_id, campus_email, full_name, phone, default_password')
 
   if (error) {
     console.error('Failed to fetch campus members:', error.message)
@@ -29,8 +29,7 @@ async function createAuthUsers() {
         campus_id:    member.campus_id,
         full_name:    member.full_name,
         campus_email: member.campus_email,
-        phone:        member.phone,
-        role:         member.role
+        phone:        member.phone
       }
     })
 

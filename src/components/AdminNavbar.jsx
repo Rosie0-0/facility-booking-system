@@ -1,6 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const DEPARTMENT_LABELS = {
+  library:         'Library',
+  student_affairs: 'Student Affairs',
+  afm:             'AFM',
+}
+
 export default function AdminNavbar({ user }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -10,11 +16,12 @@ export default function AdminNavbar({ user }) {
     navigate('/')
   }
 
+  const departmentLabel = DEPARTMENT_LABELS[user?.department] || 'Admin'
+
   const links = [
     { label: 'Dashboard',     path: '/admin/dashboard' },
     { label: 'Bookings',      path: '/admin/bookings' },
     { label: 'Facilities',    path: '/admin/facilities' },
-    { label: 'Users',         path: '/admin/users' },
     { label: 'Penalties',     path: '/admin/penalties' },
     { label: 'Announcements', path: '/admin/announcements' },
   ]
@@ -55,12 +62,13 @@ export default function AdminNavbar({ user }) {
         {/* Admin user */}
         <div className="relative group">
           <button className="flex items-center gap-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-full px-3 py-1.5 hover:border-red-300">
-            <span>{' Admin '}</span>
+            <span>{departmentLabel} Admin</span>
           </button>
-          <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-100 rounded-lg shadow-lg hidden group-hover:block">
+          <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-100 rounded-lg shadow-lg hidden group-hover:block">
             <div className="px-4 py-2.5 border-b border-gray-100">
               <p className="text-xs text-gray-500">Logged in as</p>
-              <p className="text-sm font-medium text-gray-900">{user?.campus_id}</p>
+              <p className="text-sm font-medium text-gray-900">{departmentLabel}</p>
+              <p className="text-xs text-gray-400">{user?.campus_email}</p>
             </div>
             <button
               onClick={handleLogout}

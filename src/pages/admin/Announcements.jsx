@@ -28,8 +28,8 @@ export default function Announcements() {
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }
-    const { data } = await supabase.from('users').select('*').eq('id', authUser.id).single()
-    if (!data || data.role !== 'admin') { navigate('/'); return }
+    const { data } = await supabase.from('admins').select('*').eq('id', authUser.id).single()
+    if (!data) { navigate('/'); return }
     setUser(data)
   }
 
@@ -149,7 +149,7 @@ export default function Announcements() {
 
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-400">
-                📢 Will be sent to all users ({historyLoading ? '...' : 'students, lecturers & staff'})
+                📢 Will be sent to all campus users
               </p>
               <button
                 onClick={handleSend}
