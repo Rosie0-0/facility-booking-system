@@ -183,20 +183,27 @@ export default function ManageFacilities() {
     if (file.size > 2 * 1024 * 1024) { setError('Image must be less than 2MB.'); return }
 
     setUploadingImage(true)
+    setError('')
     const fileExt = file.name.split('.').pop()
     const filePath = `facilities/${facilityId}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
+      .from('Avatars')
       .upload(filePath, file, { upsert: true })
 
     if (uploadError) { setError(uploadError.message); setUploadingImage(false); return }
 
     const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
+      .from('Avatars')
       .getPublicUrl(filePath)
 
-    await supabase.from('facilities').update({ image_path: publicUrl }).eq('facility_id', facilityId)
+    // cache-bust so the browser fetches the new image instead of the cached one
+    const { error: updateError } = await supabase
+      .from('facilities')
+      .update({ image_path: `${publicUrl}?v=${Date.now()}` })
+      .eq('facility_id', facilityId)
+
+    if (updateError) { setError(updateError.message); setUploadingImage(false); return }
     await getFacilities()
     setUploadingImage(false)
     setSuccess('Image updated!')
