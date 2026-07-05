@@ -29,6 +29,15 @@ export default function Dashboard() {
   useEffect(() => { getUser() }, [])
   useEffect(() => { getFacilities() }, [])
 
+  // Live refresh: admin availability toggles / facility edits show without reload
+  useEffect(() => {
+    const channel = supabase
+      .channel('home-facilities')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'facilities' }, getFacilities)
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [])
+
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }

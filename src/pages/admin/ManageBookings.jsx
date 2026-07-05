@@ -48,6 +48,17 @@ export default function ManageBookings() {
     if (user) { setPage(1); setBookings([]); getBookings(1, true) }
   }, [user, activeTab])
 
+  // Live refresh: new bookings / cancellations / auto-releases appear without reload
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel('admin-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' },
+        () => { setPage(1); getBookings(1, true) })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [user, activeTab])
+
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) { navigate('/'); return }

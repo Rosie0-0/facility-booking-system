@@ -6,6 +6,11 @@ import { getDepartmentContact } from '../../lib/departmentContacts'
 import StudentLayout from '../../components/StudentLayout'
 import EventRequestForm from '../../components/EventRequestForm'
 
+// ⚠️ TESTING ONLY — when true, past time slots are NOT greyed out, so you can
+// book any slot regardless of the current time (for demo screenshots).
+// SET BACK TO false FOR NORMAL USE.
+const DEMO_IGNORE_TIME = false
+
 // ---- time helpers (minutes from midnight, Malaysia time) ----
 function toMinutes(hhmm) {
   const [h, m] = hhmm.split(':').map(Number)
@@ -84,16 +89,21 @@ export default function BookingForm() {
     if (ps && pe) setSelectedSlots([{ start: ps, end: pe }])
   }, [facility])
 
-  // Availability polling (per-user RLS hides others' bookings, so we read the
-  // busy-times view; poll + refetch on focus keeps it near-realtime).
+  // Availability: Realtime on bookings (own rows via RLS) + poll as backup
+  // (other users' bookings aren't streamed to us, so the poll fills the gap).
   useEffect(() => {
     if (!facility || facility.booking_mode === 'event') return
     getBusyTimes()
-    const interval = setInterval(getBusyTimes, 15000)
+    const interval = setInterval(getBusyTimes, 10000)
     window.addEventListener('focus', getBusyTimes)
+    const channel = supabase
+      .channel(`busy-${facilityId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `facility_id=eq.${facilityId}` }, getBusyTimes)
+      .subscribe()
     return () => {
       clearInterval(interval)
       window.removeEventListener('focus', getBusyTimes)
+      supabase.removeChannel(channel)
     }
   }, [facility])
 
@@ -282,7 +292,8 @@ export default function BookingForm() {
         start: toHHMM(s), end: toHHMM(e),
         label: `${label12(toHHMM(s))} – ${label12(toHHMM(e))}`,
         // bookable until the slot's END time passes (e.g. 10–12 still open at 11)
-        disabled: e <= nowMin || overlaps(s, e),
+        // DEMO_IGNORE_TIME bypasses the past-time check for testing
+        disabled: (!DEMO_IGNORE_TIME && e <= nowMin) || overlaps(s, e),
       })
     }
   }

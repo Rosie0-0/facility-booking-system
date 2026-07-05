@@ -54,6 +54,17 @@ export default function AdminDashboard() {
     }
   }, [user])
 
+  // Live refresh of stats + recent bookings on any booking change
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel('admin-dashboard-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' },
+        () => { getStats(); getRecentBookings() })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [user])
+
   async function getUser() {
     setChecking(true)
     

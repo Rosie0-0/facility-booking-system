@@ -68,7 +68,7 @@ export default function Profile() {
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
+      .from('Avatars')
       .upload(filePath, file, { upsert: true })
 
     if (uploadError) {
@@ -77,21 +77,22 @@ export default function Profile() {
       return
     }
 
-    // Get public URL
+    // Get public URL (cache-busted so the new photo shows immediately)
     const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
+      .from('Avatars')
       .getPublicUrl(filePath)
+    const freshUrl = `${publicUrl}?v=${Date.now()}`
 
     // Update user record
     const { error: updateError } = await supabase
       .from('users')
-      .update({ avatar_url: publicUrl })
+      .update({ avatar_url: freshUrl })
       .eq('id', user.id)
 
     if (updateError) {
       setError(updateError.message)
     } else {
-      setAvatarUrl(publicUrl)
+      setAvatarUrl(freshUrl)
       setSuccess('Profile picture updated!')
       setTimeout(() => setSuccess(''), 3000)
     }
